@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Fit Tracker — เวท/คาร์ดิโอ/อาหาร/น้ำหนัก</title>
+<style>
+  :root{
+    --navy:#1e3a5f; --navy-dark:#152a45;
+    --orange:#ea580c; --green:#16a34a; --blue:#2563eb; --gray:#94a3b8; --teal:#0891b2;
+    --bg:#f1f5f9; --card:#ffffff; --border:#e2e8f0; --text:#1e293b; --muted:#64748b;
+    --danger:#dc2626; --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',-apple-system,'Helvetica Neue',Arial,'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--text);padding-bottom:76px;}
+  header{background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  header h1{margin:0;font-size:19px;font-weight:700;}
+  header .sub{font-size:12.5px;opacity:.85;margin-top:2px;}
+  main{max-width:640px;margin:0 auto;padding:14px;}
+  .card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid var(--border);}
+  .card h2{margin:0 0 12px;font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;color:#fff;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th,td{padding:7px 6px;text-align:left;border-bottom:1px solid var(--border);}
+  th{background:var(--navy);color:#fff;font-size:12.5px;font-weight:600;}
+  tr:nth-child(even) td{background:#f8fafc;}
+  input,select,textarea,button{font-family:inherit;font-size:14px;}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--text);
+  }
+  label{font-size:12.5px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px;}
+  .field{margin-bottom:10px;flex:1;min-width:110px;}
+  .btn{background:var(--navy);color:#fff;border:none;padding:10px 16px;border-radius:9px;font-weight:600;cursor:pointer;}
+  .btn:active{opacity:.85;}
+  .btn.green{background:var(--green);}
+  .btn.orange{background:var(--orange);}
+  .btn.gray{background:#64748b;}
+  .btn.ghost{background:transparent;color:var(--danger);border:1px solid var(--danger);padding:6px 10px;font-size:12px;}
+  .btn.small{padding:6px 10px;font-size:12px;}
+  .exercise-row{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;}
+  .exercise-row .name{font-weight:700;font-size:14px;}
+  .exercise-row .target{font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .exercise-row .note{font-size:11.5px;color:var(--teal);margin-top:4px;}
+  .log-inputs{display:flex;gap:6px;margin-top:6px;}
+  .log-inputs input{flex:1;}
+  .hist-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-meta{color:var(--muted);font-size:11.5px;}
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:30;box-shadow:0 -2px 8px rgba(0,0,0,.08);}
+  .tabbar button{flex:1;background:none;border:none;padding:9px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:10.5px;font-weight:600;cursor:pointer;}
+  .tabbar button.active{color:var(--navy);}
+  .tabbar .ic{font-size:19px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  .pill-toggle{display:flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;width:fit-content;margin-bottom:10px;}
+  .pill-toggle button{border:none;background:#fff;padding:7px 16px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;}
+  .pill-toggle button.active{background:var(--navy);color:#fff;}
+  .kcal-bar-bg{background:var(--border);border-radius:999px;height:10px;overflow:hidden;margin:6px 0;}
+  .kcal-bar-fill{height:100%;border-radius:999px;transition:width .3s;}
+  .muted{color:var(--muted);font-size:12.5px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .stat{background:#f8fafc;border-radius:10px;padding:10px;text-align:center;}
+  .stat .v{font-size:20px;font-weight:800;color:var(--navy);}
+  .stat .l{font-size:11px;color:var(--muted);}
+  .photo-thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:14px 0;}
+  #toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:9px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:50;}
+  #toast.show{opacity:1;}
+  .day-select{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
+  .day-select button{flex-shrink:0;border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;}
+  .day-select button.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  canvas{max-width:100%;}
+  .settings-link{font-size:11.5px;color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏋️ Fit Tracker</h1>
+  <div class="sub" id="headerSub">กำลังโหลด...</div>
+</header>
+
+<main>
+
+  <!-- ============ HOME ============ -->
+  <section class="tab-panel active" id="tab-home">
+    <div class="card">
+      <h2 id="homeDayTitle">วันนี้</h2>
+      <div class="row" style="justify-content:space-between;margin-bottom:6px;">
+        <span class="muted" id="homeDateStr"></span>
+        <span class="muted" id="homeProgramDay"></span>
+      </div>
+      <div id="homeWorkoutBadge" style="margin:8px 0"></div>
+      <div class="grid2">
+        <div class="stat"><div class="v" id="homeKcalTarget">-</div><div class="l">เป้าหมาย kcal วันนี้</div></div>
+        <div class="stat"><div class="v" id="homeKcalActual">-</div><div class="l">กินไปแล้ว (kcal)</div></div>
+      </div>
+      <div style="margin-top:10px" class="muted" id="homeCardioTip"></div>
+    </div>
+
+    <div class="card">
+      <h2>📊 สรุปสัปดาห์นี้</h2>
+      <div class="grid2">
+        <div class="stat"><div class="v" id="statWorkouts">0</div><div class="l">ครั้งที่ลงเวท</div></div>
+        <div class="stat"><div class="v" id="statCardioMin">0</div><div class="l">นาทีคาร์ดิโอ</div></div>
+        <div class="stat"><div class="v" id="statAvgKcal">0</div><div class="l">kcal เฉลี่ย/วัน</div></div>
+        <div class="stat"><div class="v" id="statWeight">-</div><div class="l">น้ำหนักล่าสุด (kg)</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⚙️ ตั้งค่าโปรแกรม</h2>
+      <div class="field">
+        <label>วันเริ่มโปรแกรม (Day 1 / 65)</label>
+        <input type="date" id="startDateInput">
+      </div>
+      <div class="row">
+        <button class="btn small" onclick="saveStartDate()">บันทึกวันเริ่ม</button>
+        <button class="btn small gray" onclick="exportData()">⬇️ Export ข้อมูล</button>
+        <label class="btn small gray" style="cursor:pointer;">⬆️ Import
+          <input type="file" accept="application/json" style="display:none" onchange="importData(event)">
+        </label>
+      </div>
+      <p class="muted" style="margin-top:8px">ข้อมูลทั้งหมดเก็บในเบราว์เซอร์นี้เท่านั้น (ฟรี ไม่มีเซิร์ฟเวอร์) กด Export เป็นประจำเพื่อสำรองข้อมูล</p>
+    </div>
+  </section>
+
+  <!-- ============ WEIGHTS ============ -->
+  <section class="tab-panel" id="tab-lift">
+    <div class="card">
+      <h2 id="liftTitle">โปรแกรมเวท</h2>
+      <div class="day-select" id="liftDaySelect"></div>
+      <div id="exerciseList"></div>
+    </div>
+    <div class="card">
+      <h2>📜 ประวัติการลงเวท</h2>
+      <div id="liftHistory"><div class="empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+  </section>
+
+  <!-- ============ BODYWEIGHT ============ -->
+  <section class="tab-panel" id="tab-weight">
+    <div class="card">
+      <h2>⚖️ น้ำหนักตัว</h2>
+      <p class="muted">เป้าหมาย: 53.5-54 kg → 49-50 kg ใน 65 วัน</p>
+      <div class="row">
+        <div class="field"><label>วันที่</label><input type="date" id="bwDate"></div>
+        <div class="field"><label>น้ำหนัก (kg)</label><input type="number" step="0.1" id="bwValue" placeholder="เช่น 53.2"></div>
+      </div>
+      <button class="btn green" onclick="addBodyWeight()">บันทึกน้ำหนัก</button>
+    </div>
+    <div class="card">
+      <h2>📈 กราฟแนวโน้ม</h2>
+      <canvas id="weightChart" height="180"></canvas>
+      <div id="weightNoData" class="empty" style="display:none">ยังไม่มีข้อมูล — เริ่มบันทึกน้ำหนักรายสัปดาห์ได้เลย</div>
+    </div>
+    <div class="card">
+      <h2>📜 ประวัติ</h2>
+      <div id="weightHistory"><div class="empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+  </section>
+
+  <!-- ============ CARDIO ============ -->
+  <section class="tab-panel" id="tab-cardio">
+    <div class="card">
+      <h2>🏃 บันทึกคาร์ดิโอ</h2>
+      <div class="row">
+        <div class="field"><label>วันที่</label><input type="date" id="cDate"></div>
+        <div class="field">
+          <label>ประเภท</label>
+          <select id="cType">
+            <option>วิ่ง 5 km</option>
+            <option>วิ่ง 10 km (long run)</option>
+            <option>วิ่งอื่นๆ</option>
+            <option>แบดมินตัน</option>
+            <option>Spin bike</option>
+            <option>เดิน/จ๊อกเบา</option>
+            <option>Active recovery</option>
+            <option>อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label>ระยะเวลา (นาที)</label><input type="number" id="cMinutes" placeholder="เช่น 30"></div>
+        <div class="field"><label>ระยะทาง (km) — ถ้ามี</label><input type="number" step="0.1" id="cDistance" placeholder="เช่น 5"></div>
+      </div>
+      <div class="field"><label>โน้ต</label><input type="text" id="cNote" placeholder="เพซ, ความรู้สึก ฯลฯ"></div>
+      <button class="btn green" onclick="addCardio()">บันทึกคาร์ดิโอ</button>
+    </div>
+    <div class="card">
+      <h2>📜 ประวัติคาร์ดิโอ</h2>
+      <div id="cardioHistory"><div class="empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+  </section>
+
+  <!-- ============ FOOD ============ -->
+  <section class="tab-panel" id="tab-food">
+    <div class="card">
+      <h2 id="foodTitle">🍚 แผนอาหารวันนี้</h2>
+      <div class="pill-toggle" id="pmsToggle">
+        <button data-v="0" class="active" onclick="setPMS(false)">สัปดาห์ปกติ</button>
+        <button data-v="1" onclick="setPMS(true)">ช่วง PMS (+130kcal)</button>
+      </div>
+      <table id="foodPlanTable"></table>
+      <div class="row" style="justify-content:space-between;margin-top:10px">
+        <b id="foodPlanTotal"></b>
+        <span class="muted" id="foodPlanMacro"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>✅ ความคืบหน้าวันนี้</h2>
+      <div class="kcal-bar-bg"><div class="kcal-bar-fill" id="kcalBarFill" style="width:0%;background:var(--green)"></div></div>
+      <div class="row" style="justify-content:space-between">
+        <span class="muted" id="kcalProgressText">0 / 0 kcal</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📸 บันทึกมื้ออาหาร</h2>
+      <div class="row">
+        <div class="field">
+          <label>มื้อ</label>
+          <select id="fMeal">
+            <option>เช้า</option>
+            <option>กลางวัน</option>
+            <option>ของว่างบ่าย</option>
+            <option>ก่อนออกกำลังกาย</option>
+            <option>เย็น</option>
+            <option>อื่นๆ</option>
+          </select>
+        </div>
+        <div class="field"><label>kcal โดยประมาณ</label><input type="number" id="fKcal" placeholder="เช่น 350"></div>
+      </div>
+      <div class="field"><label>รายการอาหาร</label><input type="text" id="fDesc" placeholder="เช่น ไก่อกต้ม 85g + ข้าวสวย 80g"></div>
+      <div class="field"><label>รูปถ่าย (ถ้ามี)</label><input type="file" accept="image/*" id="fPhoto"></div>
+      <button class="btn green" onclick="addMeal()">บันทึกมื้อนี้</button>
+    </div>
+
+    <div class="card">
+      <h2>📜 ประวัติมื้ออาหารวันนี้</h2>
+      <div id="mealHistory"><div class="empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<nav class="tabbar">
+  <button class="active" data-tab="home" onclick="switchTab('home')"><span class="ic">🏠</span>หน้าหลัก</button>
+  <button data-tab="lift" onclick="switchTab('lift')"><span class="ic">🏋️</span>เวท</button>
+  <button data-tab="weight" onclick="switchTab('weight')"><span class="ic">⚖️</span>น้ำหนัก</button>
+  <button data-tab="cardio" onclick="switchTab('cardio')"><span class="ic">🏃</span>คาร์ดิโอ</button>
+  <button data-tab="food" onclick="switchTab('food')"><span class="ic">🍚</span>อาหาร</button>
+</nav>
+
+<script>
+/* ================= DATA MODEL ================= */
+
+const COLORS = { lift:'#ea580c', run:'#16a34a', rest:'#94a3b8', badminton:'#2563eb', spin:'#0891b2' };
+
+const EXERCISE_PLANS = {
+  UpperA: { name:'Upper A — ไหล่ + แขน', exercises:[
+    {name:'Barbell Overhead Press', target:'4x6-8', note:'ท่าหลัก ทำตอนสดที่สุด'},
+    {name:'DB Lateral Raise', target:'3x12-15'},
+    {name:'Barbell Bicep Curl', target:'3x10'},
+    {name:'Skull Crusher (บาร์เบล+ม้านั่ง)', target:'3x10-12'},
+    {name:'Incline DB Curl', target:'3x12'},
+    {name:'Face Pull (band)', target:'3x15', note:'ปิดท้าย เสริม posture'}
+  ]},
+  Lower: { name:'Lower — ขา + สะโพก + Core', exercises:[
+    {name:'Barbell Back Squat', target:'4x6-8', note:'ท่าหลัก'},
+    {name:'Barbell Hip Thrust', target:'4x10-12', note:'สำคัญสุดสำหรับสะโพก'},
+    {name:'DB Romanian Deadlift', target:'3x8-10', note:'ใช้ DB แทน barbell'},
+    {name:'Bulgarian Split Squat (DB)', target:'3x10/ข้าง'},
+    {name:'Band Lateral Walk', target:'3x15/ข้าง'},
+    {name:'Plank', target:'3x40s', note:'ปิดท้าย'}
+  ]},
+  UpperB: { name:'Upper B — อก + หลัง', exercises:[
+    {name:'Barbell Bench Press', target:'4x6-8', note:'ท่าหลัก'},
+    {name:'Barbell Bent-over Row', target:'4x8-10'},
+    {name:'Incline DB Press', target:'3x10-12'},
+    {name:'DB Row (หนุนม้านั่ง)', target:'3x10/ข้าง'},
+    {name:'Reverse Fly (DB)', target:'3x12-15'},
+    {name:'Band Woodchopper', target:'3x12/ข้าง', note:'ปิดท้ายด้วย rotation core'}
+  ]}
+};
+
+// weekday index: 0=Sun..6=Sat
+// lift days (Mon=1, Wed=3, Sat=6) alternate by odd/even program-week
+function getWeekdayInfo(date){
+  const wd = date.getDay();
+  const pd = getProgramDay(date);
+  const wk = Math.ceil(pd/7);
+  const odd = (wk % 2 === 1);
+  switch(wd){
+    case 0: return {type:'run', label:'วิ่ง 10 km (long run)', color:COLORS.run, secondary:'เพซช้า สบายๆ'};
+    case 1: return {type:'lift', variant: odd?'UpperA':'Lower', color:COLORS.lift, secondary:'เดิน/จ๊อกเบา 20-25 นาที'};
+    case 2: return {type:'run', label:'วิ่ง 5 km', color:COLORS.run, secondary:'เพซปกติ/interval'};
+    case 3: return {type:'lift', variant: odd?'Lower':'UpperA', color:COLORS.lift, secondary:'Spin bike 20-30 นาที'};
+    case 4: return {type:'rest', label:'พักเต็มวัน', color:COLORS.rest, secondary:'เดินเบาๆ ได้ ไม่ฝืน'};
+    case 5: return {type:'badminton', label:'แบดมินตัน', color:COLORS.badminton, secondary:'active recovery'};
+    case 6: return {type:'lift', variant: odd?'UpperB':'Lower', color:COLORS.lift, secondary:'Spin bike 20-30 นาที'};
+  }
+}
+
+const DAY_NAMES = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+
+// FOOD_PLAN[weekday 0-6][normal/pms]
+const FOOD_PLAN = {
+1:{ // Monday
+  normal:{target:1360, protein:107.2, chicken:303, rice:266, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 85g + ข้าวสวย 64g + อะโวคาโด 1/2 ลูก หรือ น้ำมันมะกอก 1 ช้อนโต๊ะ', kcal:343},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 133g + ข้าวสวย 122g + ผักตามชอบ', kcal:378},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'แอปเปิ้ล 200g', kcal:104},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 85g + ข้าวสวย 80g', kcal:244}
+  ]},
+  pms:{target:1490, protein:109.9, chicken:303, rice:366, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 85g + ข้าวสวย 88g + อะโวคาโด/น้ำมันมะกอก', kcal:375},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 133g + ข้าวสวย 168g + ผักตามชอบ', kcal:438},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'แอปเปิ้ล 200g', kcal:104},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 85g + ข้าวสวย 110g', kcal:283}
+  ]}
+},
+2:{ // Tuesday
+  normal:{target:1400, protein:107.8, chicken:288, rice:291, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 81g + ข้าวสวย 70g + อะโวคาโด/น้ำมันมะกอก', kcal:345},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 127g + ข้าวสวย 134g + ผักตามชอบ', kcal:384},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'ฝรั่ง 200g', kcal:136},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 80g + ข้าวสวย 87g', kcal:245}
+  ]},
+  pms:{target:1530, protein:110.5, chicken:288, rice:391, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 81g + ข้าวสวย 94g + อะโวคาโด/น้ำมันมะกอก', kcal:376},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 127g + ข้าวสวย 180g + ผักตามชอบ', kcal:444},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'ฝรั่ง 200g', kcal:136},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 80g + ข้าวสวย 117g', kcal:284}
+  ]}
+},
+3:{ // Wednesday
+  normal:{target:1430, protein:109.0, chicken:301, rice:335, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 80g + อะโวคาโด/น้ำมันมะกอก', kcal:363},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 133g + ข้าวสวย 154g + ผักตามชอบ', kcal:420},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'มะละกอสุก 200g', kcal:86},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 101g', kcal:270}
+  ]},
+  pms:{target:1560, protein:111.7, chicken:301, rice:435, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 104g + อะโวคาโด/น้ำมันมะกอก', kcal:394},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 133g + ข้าวสวย 200g + ผักตามชอบ', kcal:479},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'มะละกอสุก 200g', kcal:86},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 131g', kcal:309}
+  ]}
+},
+4:{ // Thursday
+  normal:{target:1300, protein:109.6, chicken:310, rice:357, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 87g + ข้าวสวย 86g + อะโวคาโด/น้ำมันมะกอก', kcal:375},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 136g + ข้าวสวย 164g + ผักตามชอบ', kcal:438},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'แก้วมังกร 200g', kcal:120},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 87g + ข้าวสวย 107g', kcal:283}
+  ]},
+  pms:{target:1430, protein:112.3, chicken:310, rice:457, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 87g + ข้าวสวย 110g + อะโวคาโด/น้ำมันมะกอก', kcal:407},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 136g + ข้าวสวย 210g + ผักตามชอบ', kcal:497},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'แก้วมังกร 200g', kcal:120},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 87g + ข้าวสวย 137g', kcal:322}
+  ]}
+},
+5:{ // Friday
+  normal:{target:1330, protein:106.9, chicken:299, rice:255, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 61g + อะโวคาโด/น้ำมันมะกอก', kcal:338},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 131g + ข้าวสวย 117g + ผักตามชอบ', kcal:368},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'ส้ม 200g', kcal:94},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 77g', kcal:239}
+  ]},
+  pms:{target:1460, protein:109.6, chicken:299, rice:355, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 85g + อะโวคาโด/น้ำมันมะกอก', kcal:369},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 131g + ข้าวสวย 163g + ผักตามชอบ', kcal:428},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'ส้ม 200g', kcal:94},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 107g', kcal:278}
+  ]}
+},
+6:{ // Saturday
+  normal:{target:1400, protein:108.1, chicken:301, rice:301, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 72g + อะโวคาโด/น้ำมันมะกอก', kcal:352},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 133g + ข้าวสวย 139g + ผักตามชอบ', kcal:400},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'สับปะรด 200g', kcal:100},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 90g', kcal:256}
+  ]},
+  pms:{target:1530, protein:110.8, chicken:301, rice:401, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 96g + อะโวคาโด/น้ำมันมะกอก', kcal:383},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 133g + ข้าวสวย 185g + ผักตามชอบ', kcal:460},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'สับปะรด 200g', kcal:100},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 120g', kcal:295}
+  ]}
+},
+0:{ // Sunday
+  normal:{target:1480, protein:110.6, chicken:301, rice:394, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 95g + อะโวคาโด/น้ำมันมะกอก', kcal:382},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 132g + ข้าวสวย 181g + ผักตามชอบ', kcal:453},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'แตงโม 200g', kcal:60},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 85g + ข้าวสวย 118g', kcal:294}
+  ]},
+  pms:{target:1610, protein:113.3, chicken:301, rice:494, meals:[
+    {time:'เช้า', desc:'ไก่อกต้ม/ย่าง 84g + ข้าวสวย 119g + อะโวคาโด/น้ำมันมะกอก', kcal:413},
+    {time:'กลางวัน', desc:'ไก่อกต้ม/ย่าง 132g + ข้าวสวย 227g + ผักตามชอบ', kcal:513},
+    {time:'บ่าย 15:00 (ของว่าง)', desc:'แตงโม 200g', kcal:60},
+    {time:'ก่อนออกกำลังกายเย็น', desc:'เมล็ดเจีย 15g + กล้วยหอม 150g', kcal:206},
+    {time:'เย็น', desc:'ไก่อกต้ม/ย่าง 85g + ข้าวสวย 148g', kcal:333}
+  ]}
+}
+};
+
+/* ================= STATE ================= */
+let programStartDate = null; // Date object, midnight
+let selectedLiftDay = null; // 'UpperA' | 'Lower' | 'UpperB'
+let pmsMode = false;
+let db = null;
+
+function toISODate(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function todayDate(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+function parseLocalDate(dstr){ return new Date(dstr+'T00:00:00'); }
+function getProgramDay(date){
+  if(!programStartDate) return 1;
+  const diff = Math.round((date - programStartDate)/86400000);
+  return diff+1;
+}
+
+/* ================= INDEXEDDB ================= */
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open('fitTrackerDB', 1);
+    req.onupgradeneeded = (e)=>{
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains('workouts')) d.createObjectStore('workouts',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('bodyweights')) d.createObjectStore('bodyweights',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('cardio')) d.createObjectStore('cardio',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('meals')) d.createObjectStore('meals',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings',{keyPath:'key'});
+    };
+    req.onsuccess = (e)=>resolve(e.target.result);
+    req.onerror = (e)=>reject(e);
+  });
+}
+function txStore(name, mode='readonly'){
+  return db.transaction(name, mode).objectStore(name);
+}
+function idbAdd(store, val){
+  return new Promise((resolve,reject)=>{
+    const r = txStore(store,'readwrite').add(val);
+    r.onsuccess=()=>resolve(r.result);
+    r.onerror=(e)=>reject(e);
+  });
+}
+function idbGetAll(store){
+  return new Promise((resolve,reject)=>{
+    const r = txStore(store).getAll();
+    r.onsuccess=()=>resolve(r.result);
+    r.onerror=(e)=>reject(e);
+  });
+}
+function idbDelete(store,id){
+  return new Promise((resolve,reject)=>{
+    const r = txStore(store,'readwrite').delete(id);
+    r.onsuccess=()=>resolve();
+    r.onerror=(e)=>reject(e);
+  });
+}
+function idbPutSetting(key,value){
+  return new Promise((resolve,reject)=>{
+    const r = txStore('settings','readwrite').put({key,value});
+    r.onsuccess=()=>resolve();
+    r.onerror=(e)=>reject(e);
+  });
+}
+function idbGetSetting(key){
+  return new Promise((resolve,reject)=>{
+    const r = txStore('settings').get(key);
+    r.onsuccess=()=>resolve(r.result ? r.result.value : null);
+    r.onerror=(e)=>reject(e);
+  });
+}
+
+/* ================= TOAST ================= */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ================= TAB SWITCH ================= */
+function switchTab(name){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  if(name==='lift') renderLiftTab();
+  if(name==='weight') renderWeightTab();
+  if(name==='cardio') renderCardioTab();
+  if(name==='food') renderFoodTab();
+  if(name==='home') renderHomeTab();
+}
+
+/* ================= HOME TAB ================= */
+async function renderHomeTab(){
+  const today = todayDate();
+  const info = getWeekdayInfo(today);
+  const pd = getProgramDay(today);
+  document.getElementById('headerSub').textContent = `Day ${pd} / 65 · ${DAY_NAMES[today.getDay()]} ${toISODate(today)}`;
+  document.getElementById('homeDayTitle').textContent = `วันนี้ — ${DAY_NAMES[today.getDay()]}`;
+  document.getElementById('homeDateStr').textContent = toISODate(today);
+  document.getElementById('homeProgramDay').textContent = `Day ${pd}/65 (สัปดาห์ ${Math.ceil(pd/7)})`;
+
+  let label, color;
+  if(info.type==='lift'){ label = EXERCISE_PLANS[info.variant].name; color = info.color; }
+  else { label = info.label; color = info.color; }
+  document.getElementById('homeWorkoutBadge').innerHTML = `<span class="badge" style="background:${color}">${label}</span>`;
+  document.getElementById('homeCardioTip').textContent = `เสริม: ${info.secondary}`;
+
+  const plan = FOOD_PLAN[today.getDay()][pmsMode?'pms':'normal'];
+  document.getElementById('homeKcalTarget').textContent = plan.target;
+
+  const meals = await idbGetAll('meals');
+  const todayISO = toISODate(today);
+  const todayMeals = meals.filter(m=>m.date===todayISO);
+  const actualKcal = todayMeals.reduce((s,m)=>s+(Number(m.kcal)||0),0);
+  document.getElementById('homeKcalActual').textContent = actualKcal;
+
+  // week stats
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate()-6);
+  const workouts = await idbGetAll('workouts');
+  const cardio = await idbGetAll('cardio');
+  const bws = await idbGetAll('bodyweights');
+
+  const inRange = (dstr)=>{ const d=parseLocalDate(dstr); return d>=weekAgo && d<=today; };
+  const wCount = new Set(workouts.filter(w=>inRange(w.date)).map(w=>w.date)).size;
+  const cMin = cardio.filter(c=>inRange(c.date)).reduce((s,c)=>s+(Number(c.minutes)||0),0);
+  const weekMeals = meals.filter(m=>inRange(m.date));
+  const daysWithMeals = new Set(weekMeals.map(m=>m.date)).size || 1;
+  const avgKcal = Math.round(weekMeals.reduce((s,m)=>s+(Number(m.kcal)||0),0)/daysWithMeals);
+  const lastBW = bws.slice().sort((a,b)=>parseLocalDate(b.date)-parseLocalDate(a.date))[0];
+
+  document.getElementById('statWorkouts').textContent = wCount;
+  document.getElementById('statCardioMin').textContent = cMin;
+  document.getElementById('statAvgKcal').textContent = avgKcal||0;
+  document.getElementById('statWeight').textContent = lastBW ? lastBW.weight : '-';
+}
+
+async function saveStartDate(){
+  const v = document.getElementById('startDateInput').value;
+  if(!v) return;
+  await idbPutSetting('startDate', v);
+  programStartDate = new Date(v+'T00:00:00');
+  toast('บันทึกวันเริ่มโปรแกรมแล้ว');
+  renderHomeTab();
+}
+
+/* ================= LIFT TAB ================= */
+function renderLiftDaySelector(){
+  const container = document.getElementById('liftDaySelect');
+  const days = [
+    {k:'UpperA', label:'Upper A'},
+    {k:'Lower', label:'Lower'},
+    {k:'UpperB', label:'Upper B'}
+  ];
+  container.innerHTML = days.map(d=>`<button class="${selectedLiftDay===d.k?'active':''}" onclick="pickLiftDay('${d.k}')">${d.label}</button>`).join('');
+}
+function pickLiftDay(k){
+  selectedLiftDay = k;
+  renderLiftDaySelector();
+  renderExerciseList();
+}
+async function renderLiftTab(){
+  if(!selectedLiftDay){
+    const today = todayDate();
+    const info = getWeekdayInfo(today);
+    selectedLiftDay = info.type==='lift' ? info.variant : 'UpperA';
+  }
+  renderLiftDaySelector();
+  renderExerciseList();
+  await renderLiftHistory();
+}
+function renderExerciseList(){
+  const plan = EXERCISE_PLANS[selectedLiftDay];
+  document.getElementById('liftTitle').textContent = plan.name;
+  const el = document.getElementById('exerciseList');
+  el.innerHTML = plan.exercises.map((ex,i)=>`
+    <div class="exercise-row">
+      <div class="name">${ex.name}</div>
+      <div class="target">เป้าหมาย: ${ex.target}</div>
+      ${ex.note? `<div class="note">${ex.note}</div>`:''}
+      <div class="log-inputs">
+        <input type="number" step="0.5" placeholder="น้ำหนัก (kg)" id="ex-w-${i}">
+        <input type="text" placeholder="Reps ที่ทำได้ เช่น 8,8,7,6" id="ex-r-${i}">
+        <button class="btn small orange" onclick="logExercise('${selectedLiftDay}',${i})">บันทึก</button>
+      </div>
+    </div>
+  `).join('');
+}
+async function logExercise(dayKey, idx){
+  const plan = EXERCISE_PLANS[dayKey];
+  const ex = plan.exercises[idx];
+  const weight = document.getElementById(`ex-w-${idx}`).value;
+  const reps = document.getElementById(`ex-r-${idx}`).value;
+  if(!weight && !reps){ toast('กรอกน้ำหนักหรือ reps ก่อนนะ'); return; }
+  await idbAdd('workouts', {
+    date: toISODate(todayDate()),
+    dayType: dayKey,
+    exercise: ex.name,
+    target: ex.target,
+    weight: weight||'', reps: reps||'',
+    programDay: getProgramDay(todayDate())
+  });
+  toast('บันทึกแล้ว: '+ex.name);
+  document.getElementById(`ex-w-${idx}`).value='';
+  document.getElementById(`ex-r-${idx}`).value='';
+  renderLiftHistory();
+}
+async function renderLiftHistory(){
+  const all = await idbGetAll('workouts');
+  const filtered = all.filter(w=>w.dayType===selectedLiftDay).sort((a,b)=>b.id-a.id).slice(0,30);
+  const el = document.getElementById('liftHistory');
+  if(!filtered.length){ el.innerHTML='<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+  el.innerHTML = filtered.map(w=>`
+    <div class="hist-item">
+      <div>
+        <div><b>${w.exercise}</b> — ${w.weight?w.weight+'kg':''} ${w.reps? '× '+w.reps:''}</div>
+        <div class="hist-meta">${w.date} · เป้า ${w.target}</div>
+      </div>
+      <button class="btn ghost" onclick="deleteItem('workouts',${w.id},'lift')">ลบ</button>
+    </div>
+  `).join('');
+}
+
+/* ================= BODYWEIGHT TAB ================= */
+async function renderWeightTab(){
+  document.getElementById('bwDate').value = toISODate(todayDate());
+  const all = (await idbGetAll('bodyweights')).sort((a,b)=>parseLocalDate(a.date)-parseLocalDate(b.date));
+  drawWeightChart(all);
+  const el = document.getElementById('weightHistory');
+  if(!all.length){ el.innerHTML='<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+  el.innerHTML = all.slice().reverse().map(w=>`
+    <div class="hist-item">
+      <div><b>${w.weight} kg</b> <span class="hist-meta">${w.date}</span></div>
+      <button class="btn ghost" onclick="deleteItem('bodyweights',${w.id},'weight')">ลบ</button>
+    </div>
+  `).join('');
+}
+async function addBodyWeight(){
+  const date = document.getElementById('bwDate').value;
+  const value = document.getElementById('bwValue').value;
+  if(!date || !value){ toast('กรอกวันที่และน้ำหนักก่อนนะ'); return; }
+  await idbAdd('bodyweights', {date, weight:Number(value)});
+  document.getElementById('bwValue').value='';
+  toast('บันทึกน้ำหนักแล้ว');
+  renderWeightTab();
+  renderHomeTab();
+}
+function drawWeightChart(data){
+  const canvas = document.getElementById('weightChart');
+  const noData = document.getElementById('weightNoData');
+  const ctx = canvas.getContext && canvas.getContext('2d');
+  if(!ctx) return;
+  const w = canvas.width = canvas.clientWidth || 560;
+  const h = canvas.height = 180;
+  ctx.clearRect(0,0,w,h);
+  if(data.length < 1){ noData.style.display='block'; canvas.style.display='none'; return; }
+  noData.style.display='none'; canvas.style.display='block';
+
+  const pad = {l:34, r:12, t:14, b:24};
+  const values = data.map(d=>d.weight);
+  let min = Math.min(...values, 49), max = Math.max(...values, 54);
+  min = Math.floor(min-0.5); max = Math.ceil(max+0.5);
+
+  // goal band 49-50
+  const yFor = v => pad.t + (max-v)/(max-min) * (h-pad.t-pad.b);
+  const xFor = i => pad.l + (data.length===1? 0 : i/(data.length-1)) * (w-pad.l-pad.r);
+
+  ctx.fillStyle = 'rgba(22,163,74,0.12)';
+  ctx.fillRect(pad.l, yFor(50), w-pad.l-pad.r, yFor(49)-yFor(50));
+
+  // axis
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth=1;
+  ctx.font = '10px sans-serif'; ctx.fillStyle='#64748b';
+  for(let g=min; g<=max; g += Math.max(1,Math.round((max-min)/5))){
+    const y = yFor(g);
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(w-pad.r,y); ctx.stroke();
+    ctx.fillText(g.toFixed(1), 2, y+3);
+  }
+
+  // line
+  ctx.strokeStyle = '#1e3a5f'; ctx.lineWidth=2.5; ctx.beginPath();
+  data.forEach((d,i)=>{ const x=xFor(i), y=yFor(d.weight); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.stroke();
+  // points
+  ctx.fillStyle = '#ea580c';
+  data.forEach((d,i)=>{ const x=xFor(i), y=yFor(d.weight); ctx.beginPath(); ctx.arc(x,y,3.5,0,7); ctx.fill(); });
+}
+
+/* ================= CARDIO TAB ================= */
+async function renderCardioTab(){
+  document.getElementById('cDate').value = toISODate(todayDate());
+  const all = (await idbGetAll('cardio')).sort((a,b)=>b.id-a.id);
+  const el = document.getElementById('cardioHistory');
+  if(!all.length){ el.innerHTML='<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+  el.innerHTML = all.map(c=>`
+    <div class="hist-item">
+      <div>
+        <div><b>${c.type}</b> — ${c.minutes||0} นาที ${c.distance? '· '+c.distance+' km':''}</div>
+        <div class="hist-meta">${c.date} ${c.note? '· '+c.note:''}</div>
+      </div>
+      <button class="btn ghost" onclick="deleteItem('cardio',${c.id},'cardio')">ลบ</button>
+    </div>
+  `).join('');
+}
+async function addCardio(){
+  const date = document.getElementById('cDate').value;
+  const type = document.getElementById('cType').value;
+  const minutes = document.getElementById('cMinutes').value;
+  const distance = document.getElementById('cDistance').value;
+  const note = document.getElementById('cNote').value;
+  if(!date || !minutes){ toast('กรอกวันที่และนาทีก่อนนะ'); return; }
+  await idbAdd('cardio', {date, type, minutes:Number(minutes), distance:distance?Number(distance):null, note});
+  document.getElementById('cMinutes').value='';
+  document.getElementById('cDistance').value='';
+  document.getElementById('cNote').value='';
+  toast('บันทึกคาร์ดิโอแล้ว');
+  renderCardioTab();
+  renderHomeTab();
+}
+
+/* ================= FOOD TAB ================= */
+function setPMS(v){
+  pmsMode = v;
+  document.querySelectorAll('#pmsToggle button').forEach(b=>b.classList.toggle('active', (b.dataset.v==='1')===v));
+  renderFoodTab();
+  renderHomeTab();
+}
+async function renderFoodTab(){
+  const today = todayDate();
+  const wd = today.getDay();
+  const plan = FOOD_PLAN[wd][pmsMode?'pms':'normal'];
+  document.getElementById('foodTitle').textContent = `🍚 แผนอาหารวันนี้ — ${DAY_NAMES[wd]}`;
+  const table = document.getElementById('foodPlanTable');
+  table.innerHTML = `<tr><th>มื้อ</th><th>รายการ</th><th>kcal</th></tr>` +
+    plan.meals.map(m=>`<tr><td>${m.time}</td><td>${m.desc}</td><td>~${m.kcal}</td></tr>`).join('');
+  document.getElementById('foodPlanTotal').textContent = `รวมเป้าหมาย: ~${plan.target} kcal`;
+  document.getElementById('foodPlanMacro').textContent = `โปรตีน ~${plan.protein}g · ไก่รวม ${plan.chicken}g · ข้าวสวยรวม ${plan.rice}g`;
+
+  await renderMealProgress(plan);
+  await renderMealHistory();
+}
+async function renderMealProgress(plan){
+  const todayISO = toISODate(todayDate());
+  const meals = (await idbGetAll('meals')).filter(m=>m.date===todayISO);
+  const actual = meals.reduce((s,m)=>s+(Number(m.kcal)||0),0);
+  const pct = Math.min(100, Math.round(actual/plan.target*100));
+  const fill = document.getElementById('kcalBarFill');
+  fill.style.width = pct+'%';
+  fill.style.background = actual > plan.target ? 'var(--danger, #dc2626)' : (pct>85? '#eab308' : '#16a34a');
+  document.getElementById('kcalProgressText').textContent = `${actual} / ${plan.target} kcal (${pct}%)`;
+}
+async function addMeal(){
+  const date = toISODate(todayDate());
+  const meal = document.getElementById('fMeal').value;
+  const kcal = document.getElementById('fKcal').value;
+  const desc = document.getElementById('fDesc').value;
+  const photoInput = document.getElementById('fPhoto');
+  if(!desc){ toast('กรอกรายการอาหารก่อนนะ'); return; }
+
+  let photo = null;
+  if(photoInput.files && photoInput.files[0]){
+    photo = await fileToDataURL(photoInput.files[0]);
+  }
+  await idbAdd('meals', {date, meal, kcal:Number(kcal)||0, desc, photo, isPMS:pmsMode});
+  document.getElementById('fKcal').value='';
+  document.getElementById('fDesc').value='';
+  photoInput.value='';
+  toast('บันทึกมื้ออาหารแล้ว');
+  renderFoodTab();
+  renderHomeTab();
+}
+function fileToDataURL(file){
+  return new Promise((resolve)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+}
+async function renderMealHistory(){
+  const todayISO = toISODate(todayDate());
+  const meals = (await idbGetAll('meals')).filter(m=>m.date===todayISO).sort((a,b)=>b.id-a.id);
+  const el = document.getElementById('mealHistory');
+  if(!meals.length){ el.innerHTML='<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+  el.innerHTML = meals.map(m=>`
+    <div class="hist-item">
+      <div class="row" style="align-items:center;gap:10px">
+        ${m.photo? `<img class="photo-thumb" src="${m.photo}">` : ''}
+        <div>
+          <div><b>${m.meal}</b> — ${m.desc}</div>
+          <div class="hist-meta">${m.kcal} kcal</div>
+        </div>
+      </div>
+      <button class="btn ghost" onclick="deleteItem('meals',${m.id},'food')">ลบ</button>
+    </div>
+  `).join('');
+}
+
+/* ================= SHARED DELETE ================= */
+async function deleteItem(store,id,tab){
+  await idbDelete(store,id);
+  toast('ลบแล้ว');
+  if(tab==='lift') renderLiftHistory();
+  if(tab==='weight') renderWeightTab();
+  if(tab==='cardio') renderCardioTab();
+  if(tab==='food') renderFoodTab();
+  renderHomeTab();
+}
+
+/* ================= EXPORT / IMPORT ================= */
+async function exportData(){
+  const data = {
+    workouts: await idbGetAll('workouts'),
+    bodyweights: await idbGetAll('bodyweights'),
+    cardio: await idbGetAll('cardio'),
+    meals: await idbGetAll('meals'),
+    startDate: await idbGetSetting('startDate'),
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `fit-tracker-backup-${toISODate(todayDate())}.json`;
+  a.click();
+  toast('Export สำเร็จ');
+}
+async function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const text = await file.text();
+  try{
+    const data = JSON.parse(text);
+    for(const key of ['workouts','bodyweights','cardio','meals']){
+      if(Array.isArray(data[key])){
+        for(const item of data[key]){
+          const clone = {...item}; delete clone.id;
+          await idbAdd(key, clone);
+        }
+      }
+    }
+    if(data.startDate){ await idbPutSetting('startDate', data.startDate); programStartDate = new Date(data.startDate+'T00:00:00'); }
+    toast('Import สำเร็จ');
+    renderHomeTab();
+  }catch(e){
+    toast('ไฟล์ไม่ถูกต้อง');
+  }
+  event.target.value='';
+}
+
+/* ================= INIT ================= */
+async function init(){
+  db = await openDB();
+  const savedStart = await idbGetSetting('startDate');
+  if(savedStart){
+    programStartDate = new Date(savedStart+'T00:00:00');
+    document.getElementById('startDateInput').value = savedStart;
+  } else {
+    const d = todayDate();
+    programStartDate = d;
+    document.getElementById('startDateInput').value = toISODate(d);
+    await idbPutSetting('startDate', toISODate(d));
+  }
+  renderHomeTab();
+}
+window.addEventListener('load', init);
+window.addEventListener('resize', ()=>{ if(document.getElementById('tab-weight').classList.contains('active')) renderWeightTab(); });
+</script>
+</body>
+</html>
